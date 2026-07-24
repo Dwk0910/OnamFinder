@@ -1,8 +1,15 @@
 package org.neatore.onamfinder;
 
 import org.json.JSONObject;
+import jakarta.persistence.EntityListeners;
+
+import lombok.Getter;
+import lombok.Setter;
+import lombok.AccessLevel;
+import lombok.NoArgsConstructor;
 
 import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import jakarta.persistence.Id;
 import jakarta.persistence.Entity;
@@ -12,15 +19,16 @@ import jakarta.persistence.Enumerated;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.GenerationType;
 
-import lombok.Getter;
-
 import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 
 import java.util.List;
 import java.util.UUID;
 
 @Entity
 @Getter
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
+@EntityListeners(AuditingEntityListener.class)
 public class LostItem {
     public enum Category {
         ELECTRONICS("전자기기"),
@@ -51,7 +59,6 @@ public class LostItem {
         JSONObject json = new JSONObject();
         json.put("id", this.id);
         json.put("title", this.title);
-        json.put("description", this.description);
         json.put("content", this.content);
         json.put("category", this.category.getDisplayName());
         json.put("uploadAt", this.uploadAt);
@@ -68,13 +75,23 @@ public class LostItem {
         FINDING, COMPLETED, EXPIRED
     }
 
+    public LostItem(LostItemDto.CreateRequestDto lostItemDto, String uploaderPwd) {
+        this.title = lostItemDto.title();
+        this.content = lostItemDto.content();
+        this.category = lostItemDto.category();
+        this.foundLocation = lostItemDto.foundLocation();
+        this.foundAt = LocalDateTime.ofEpochSecond(lostItemDto.foundAt(), 0, ZoneOffset.ofHours(9));
+        this.features = lostItemDto.features();
+        this.findMethod = lostItemDto.findMethod();
+        this.uploaderPwd = uploaderPwd;
+    }
+
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
     @Column(nullable = false)
     private String title;
-    private String description;
     private String content;
 
     @Enumerated(EnumType.STRING)
@@ -89,5 +106,7 @@ public class LostItem {
     private String uploaderPwd;
     private List<String> images;
     private List<String> features;
-    private Status status;
+
+    @Setter
+    private Status status = Status.FINDING;
 }

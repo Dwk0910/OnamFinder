@@ -1,13 +1,20 @@
 package org.neatore.onamfinder;
 
 import lombok.RequiredArgsConstructor;
-import org.json.JSONArray;
+
 import org.springframework.http.ResponseEntity;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+
+import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
@@ -15,17 +22,40 @@ import org.springframework.web.bind.annotation.RestController;
 public class LostItemController {
     private final LostItemService lostItemService;
 
-    @GetMapping
-    public ResponseEntity<String> getLostItems(
-        @RequestParam(required = false) String status,
-        @RequestParam(required = false) String category,
-        @RequestParam(required = false) String search,
-        @RequestParam(required = false) Integer limit,
-        @RequestParam(required = false) Integer offset,
-        @RequestParam(required = false) String sort // This value only can be "fountAt" (default) or "title" 업로드 날짜 순 / 이름순
+    public record PageResponse<T>(
+            List<T> content,
+            Integer page,
+            Integer size,
+            Long totalElements,
+            Integer totalPages
     ) {
-        JSONArray result = new JSONArray();
-        this.lostItemService.getAllLostItems().forEach(item -> result.put(item.toJson()));
-        return ResponseEntity.ok(result.toString());
+        public static <T> PageResponse<T> from(Page<T> page) {
+            return new PageResponse<>(
+                    page.getContent(),
+                    page.getNumber(),
+                    page.getSize(),
+                    page.getTotalElements(),
+                    page.getTotalPages()
+            );
+        }
+    }
+
+    @GetMapping
+    public ResponseEntity<PageResponse<LostItemDto.QueryResponseDto>> getLostItems(Pageable pageable) {
+        Page<LostItemDto.QueryResponseDto> page = this.lostItemService.getAllLostItems(pageable);
+        return ResponseEntity.ok(PageResponse.from(page));
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<String> getLostItemById(@PathVariable String id) {
+        LostItem item = this.lostItemService.getLostItemById(id);
+        if (item == null) return ResponseEntity.notFound().build();
+        return ResponseEntity.ok(item.toJson().toString());
+    }
+
+    @PostMapping
+    public ResponseEntity<Void> createLostItem(@ModelAttribute LostItemDto.CreateRequestDto lostItemDto) {
+        lostItemService.createLostItem(lostItemDto);
+        return ResponseEntity.ok().build();
     }
 }

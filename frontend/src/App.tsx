@@ -50,6 +50,14 @@ export interface LostItem {
   status: "FINDING" | "COMPLETED";
 }
 
+export interface PageResponse<T> {
+  content: T[];
+  page: number;
+  size: number;
+  totalElements: number;
+  totalPages: number;
+}
+
 // ==========================================
 // 6. 알림 메시지 모달 (Toast)
 // ==========================================
@@ -94,36 +102,36 @@ function ToastNotification({ message, type, onClose }: ToastNotificationProps) {
 function AnimationStyles() {
   return (
       <style dangerouslySetInnerHTML={{ __html: `
-      @keyframes toastIn {
-        0% { transform: translateY(-20px) scale(0.9); opacity: 0; }
-        50% { transform: translateY(4px) scale(1.02); }
-        100% { transform: translateY(0) scale(1); opacity: 1; }
-      }
-      @keyframes slideUp {
-        0% { transform: translateY(100%); }
-        100% { transform: translateY(0); }
-      }
-      @keyframes fadeIn {
-        0% { opacity: 0; transform: translateY(10px); }
-        100% { opacity: 1; transform: translateY(0); }
-      }
-      @keyframes scalePulse {
-        0% { transform: scale(0.9); }
-        50% { transform: scale(1.1); }
-        100% { transform: scale(1); }
-      }
-      .animate-toastIn { animation: toastIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
-      .animate-slideUp { animation: slideUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
-      .animate-fadeIn { animation: fadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
-      .animate-scalePulse { animation: scalePulse 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) forwards; }
-      
-      .stagger-1 { animation-delay: 50ms; }
-      .stagger-2 { animation-delay: 100ms; }
-      .stagger-3 { animation-delay: 150ms; }
+            @keyframes toastIn {
+                0% { transform: translateY(-20px) scale(0.9); opacity: 0; }
+                50% { transform: translateY(4px) scale(1.02); }
+                100% { transform: translateY(0) scale(1); opacity: 1; }
+            }
+            @keyframes slideUp {
+                0% { transform: translateY(100%); }
+                100% { transform: translateY(0); }
+            }
+            @keyframes fadeIn {
+                0% { opacity: 0; transform: translateY(10px); }
+                100% { opacity: 1; transform: translateY(0); }
+            }
+            @keyframes scalePulse {
+                0% { transform: scale(0.9); }
+                50% { transform: scale(1.1); }
+                100% { transform: scale(1); }
+            }
+            .animate-toastIn { animation: toastIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+            .animate-slideUp { animation: slideUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+            .animate-fadeIn { animation: fadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+            .animate-scalePulse { animation: scalePulse 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) forwards; }
+            
+            .stagger-1 { animation-delay: 50ms; }
+            .stagger-2 { animation-delay: 100ms; }
+            .stagger-3 { animation-delay: 150ms; }
 
-      .scrollbar-none::-webkit-scrollbar { display: none; }
-      .scrollbar-none { -ms-overflow-style: none; scrollbar-width: none; }
-    `}} />
+            .scrollbar-none::-webkit-scrollbar { display: none; }
+            .scrollbar-none { -ms-overflow-style: none; scrollbar-width: none; }
+        `}} />
   );
 }
 
@@ -151,8 +159,8 @@ export default function App() {
       try {
         setIsLoading(true);
         setServerError(false);
-        const res = await axios.get(`${BACKEND_ADDRESS}lostitems`);
-        setItems(res.data as LostItem[]);
+        const res = await axios.get<PageResponse<LostItem>>(`${BACKEND_ADDRESS}lostitems`);
+        setItems(res.data.content);
       } catch (err) {
         console.error(err);
         setServerError(true);
@@ -333,8 +341,8 @@ export default function App() {
                                               ? "bg-amber-500/20 text-amber-400 border border-amber-500/20"
                                               : "bg-emerald-500/20 text-emerald-400 border border-emerald-500/20"
                                       }`}>
-                                        {item.status === "FINDING" ? "찾는 중" : "수령 완료"}
-                                      </span>
+                                                            {item.status === "FINDING" ? "찾는 중" : "수령 완료"}
+                                                        </span>
                                     </div>
 
                                     <div className="flex-1 flex flex-col justify-between min-w-0">
@@ -342,8 +350,8 @@ export default function App() {
                                         <div className="flex items-center justify-between">
                                           <span className="text-[9px] font-extrabold text-indigo-400 uppercase tracking-wider">{item.category}</span>
                                           <span className="text-[8px] text-slate-600 font-medium">
-                                    {new Date(item.foundAt * 1000).toLocaleDateString("ko-KR", { month: "numeric", day: "numeric" })}
-                                  </span>
+                                                                    {new Date(item.foundAt * 1000).toLocaleDateString("ko-KR", { month: "numeric", day: "numeric" })}
+                                                                </span>
                                         </div>
                                         <h3 className="font-extrabold text-xs text-slate-100 line-clamp-1 mt-1 group-hover:text-indigo-400 transition-colors">
                                           {item.title}
@@ -356,8 +364,8 @@ export default function App() {
                                       <div className="flex flex-wrap gap-1 mt-2.5">
                                         {item.features.slice(0, 2).map((feat, idx) => (
                                             <span key={idx} className="text-[8px] px-2 py-0.5 bg-slate-900 text-slate-400 rounded-md font-bold border border-slate-800/80">
-                                    #{feat}
-                                  </span>
+                                                                    #{feat}
+                                                                </span>
                                         ))}
                                       </div>
                                     </div>
